@@ -48,10 +48,12 @@ class SocketStack extends cdk.Stack {
     const apiGateway = new cdkApiGateway.WebSocketApi(this, `${props.environment}-WebSocketGateway`, {
       description: "Websocket Gateway that proxies requests to the Rust Lambda functions",
       connectRouteOptions: {
-          integration: new WebSocketLambdaIntegration('connect-integration', connectLambda)
+          integration: new WebSocketLambdaIntegration('connect-integration', connectLambda),
+          returnResponse: true
       },
       disconnectRouteOptions: {
-          integration: new WebSocketLambdaIntegration('disconnect-integration', disconnectLambda)
+          integration: new WebSocketLambdaIntegration('disconnect-integration', disconnectLambda),
+          returnResponse: true
       },
       defaultRouteOptions: {
           integration: new WebSocketLambdaIntegration('default-integration', defaultLambda),
