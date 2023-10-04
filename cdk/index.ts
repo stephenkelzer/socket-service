@@ -18,7 +18,7 @@ class SocketStack extends cdk.Stack {
 
     const connectLambda = new lambda.Function(this, 'ConnectLambda', {
       description: "SocketService Connect Lambda",
-      code: lambda.AssetCode.fromAsset("./../target/lambda/connect", { deployTime: true }),
+      code: lambda.AssetCode.fromAsset("./../target/lambda/connect/bootstrap.zip", { deployTime: true }),
       handler: "does_not_matter_for_rust_lambdas",
       runtime: lambda.Runtime.PROVIDED_AL2,
       architecture: lambda.Architecture.ARM_64
@@ -26,7 +26,7 @@ class SocketStack extends cdk.Stack {
 
     const disconnectLambda = new lambda.Function(this, 'DisconnectLambda', {
       description: "SocketService Disconnect Lambda",
-      code: lambda.AssetCode.fromAsset("./../target/lambda/disconnect", { deployTime: true }),
+      code: lambda.AssetCode.fromAsset("./../target/lambda/disconnect/bootstrap.zip", { deployTime: true }),
       handler: "does_not_matter_for_rust_lambdas",
       runtime: lambda.Runtime.PROVIDED_AL2,
       architecture: lambda.Architecture.ARM_64
