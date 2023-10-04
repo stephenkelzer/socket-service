@@ -5,6 +5,7 @@ import * as lambda from 'aws-cdk-lib/aws-lambda';
 import * as cdkApiGateway from '@aws-cdk/aws-apigatewayv2-alpha';
 import { WebSocketLambdaIntegration } from '@aws-cdk/aws-apigatewayv2-integrations-alpha';
 import { Construct } from 'constructs';
+import { RetentionDays } from 'aws-cdk-lib/aws-logs';
 
 type ENVIRONMENT = 'test' | 'staging' | 'prod';
 
@@ -21,7 +22,8 @@ class SocketStack extends cdk.Stack {
       code: lambda.AssetCode.fromAsset("./../target/lambda/connect/bootstrap.zip", { deployTime: true }),
       handler: "does_not_matter_for_rust_lambdas",
       runtime: lambda.Runtime.PROVIDED_AL2,
-      architecture: lambda.Architecture.ARM_64
+      architecture: lambda.Architecture.ARM_64,
+      logRetention: RetentionDays.ONE_WEEK
     });
 
     const disconnectLambda = new lambda.Function(this, 'DisconnectLambda', {
@@ -29,7 +31,8 @@ class SocketStack extends cdk.Stack {
       code: lambda.AssetCode.fromAsset("./../target/lambda/disconnect/bootstrap.zip", { deployTime: true }),
       handler: "does_not_matter_for_rust_lambdas",
       runtime: lambda.Runtime.PROVIDED_AL2,
-      architecture: lambda.Architecture.ARM_64
+      architecture: lambda.Architecture.ARM_64,
+      logRetention: RetentionDays.ONE_WEEK
     });
 
     const defaultLambda = new lambda.Function(this, 'DefaultLambda', {
@@ -37,7 +40,8 @@ class SocketStack extends cdk.Stack {
       code: lambda.AssetCode.fromAsset("./../target/lambda/default/bootstrap.zip", { deployTime: true }),
       handler: "does_not_matter_for_rust_lambdas",
       runtime: lambda.Runtime.PROVIDED_AL2,
-      architecture: lambda.Architecture.ARM_64
+      architecture: lambda.Architecture.ARM_64,
+      logRetention: RetentionDays.ONE_WEEK
     });
 
     const apiGateway = new cdkApiGateway.WebSocketApi(this, `${props.environment}-WebSocketGateway`, {
@@ -53,6 +57,10 @@ class SocketStack extends cdk.Stack {
           returnResponse: true
       },
     });
+
+    apiGateway.grantManageConnections(connectLambda);
+    apiGateway.grantManageConnections(disconnectLambda);
+    apiGateway.grantManageConnections(defaultLambda);
 
     apiGateway.addRoute('test', {
       integration: new WebSocketLambdaIntegration('default-integration', defaultLambda),
