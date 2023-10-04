@@ -49,8 +49,14 @@ class SocketStack extends cdk.Stack {
           integration: new WebSocketLambdaIntegration('disconnect-integration', disconnectLambda)
       },
       defaultRouteOptions: {
-          integration: new WebSocketLambdaIntegration('default-integration', defaultLambda)
-      }
+          integration: new WebSocketLambdaIntegration('default-integration', defaultLambda),
+          returnResponse: true
+      },
+    });
+
+    apiGateway.addRoute('test', {
+      integration: new WebSocketLambdaIntegration('default-integration', defaultLambda),
+      returnResponse: true
     });
 
     new cdk.CfnOutput(this, 'GatewayUrl', { value: apiGateway.apiEndpoint ?? "unknown" });
