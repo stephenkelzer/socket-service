@@ -46,4 +46,4 @@ class SocketStack extends cdk.Stack {
 
 const environment: ENVIRONMENT = process.env.ENVIRONMENT as ENVIRONMENT || 'local';
 const app = new cdk.App();
-new SocketStack(app, 'SocketStack', { environment });// set environment with env vars
+new SocketStack(app, `${environment}-SocketStack`, { environment });// set environment with env vars

@@ -66,7 +66,7 @@ jobs:
                 working-directory: ./cdk
                 run: |
                     ENVIRONMENT=staging npx cdk deploy --require-approval never --outputs-file cdk.out.json
-                    node --eval "console.log('gateway_url=' + require('./cdk.out.json')['staging-Widgets'].GatewayUrl)" >> $GITHUB_OUTPUT
+                    node --eval "console.log('gateway_url=' + require('./cdk.out.json')['staging-SocketStack'].GatewayUrl)" >> $GITHUB_OUTPUT
 
             -   name: Print CDK Outputs
                 run: |
