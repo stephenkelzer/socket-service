@@ -1,0 +1,85 @@
+name: Deploy Infrastructure
+
+on:
+    push:
+        branches: main
+
+concurrency: 
+    group: deploy-${{ github.head_ref }}
+    cancel-in-progress: true
+
+permissions: read-all
+
+jobs:
+    deploy:
+        name: Setup AWS Infrastructure
+        runs-on: ubuntu-latest
+        steps:
+            -   name: Install Node
+                uses: actions/setup-node@v3
+                with:
+                    node-version: 18.18.0
+            
+            -   name: Install Rust
+                uses: actions-rs/toolchain@v1
+                with:
+                    toolchain: stable
+                    profile: minimal
+                    override: true
+
+            -   name: Install cargo-lambda
+                run: pip3 install cargo-lambda
+
+            -   name: Checkout Code
+                uses: actions/checkout@v3
+
+            -   name: Build Lambda Binaries
+                run: cargo lambda build --release --arm64 --output-format zip
+
+            -   name: Configure AWS Credentials
+                uses: aws-actions/configure-aws-credentials@v4
+                with:
+                    aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+                    aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+                    aws-region: ${{ vars.AWS_REGION }}
+            
+            -   name: Install AWS CLI
+                id: install-aws-cli
+                uses: unfor19/install-aws-cli-action@46282f151073130d90347412d9c4ef0640177f22
+                with:
+                    version: 2
+
+            -   name: Install CDK Dependencies
+                run: npm ci --only=prod
+                working-directory: ./cdk
+
+            -   name: Run CDK Tests
+                run: npm run test
+                working-directory: ./cdk
+
+            -   name: CDK Diff
+                run: ENVIRONMENT=staging npx cdk diff --require-approval never
+                working-directory: ./cdk
+
+            -   name: CDK Deploy
+                id: cdk-deploy
+                working-directory: ./cdk
+                run: |
+                    ENVIRONMENT=staging npx cdk deploy --require-approval never --outputs-file cdk.out.json
+                    node --eval "console.log('gateway_url=' + require('./cdk.out.json')['staging-Widgets'].GatewayUrl)" >> $GITHUB_OUTPUT
+
+            -   name: Print CDK Outputs
+                run: |
+                    echo ${{ steps.cdk-deploy.outputs.gateway_url }}
+
+            -   name: Save CDK Outputs to AWS Systems Manager Parameter Store
+                run: aws ssm put-parameter --name /socket_service/gateway_url --value ${{ steps.cdk-deploy.outputs.gateway_url }} --type String --overwrite
+
+            # -   name: Save Artifact
+            #     if: always()
+            #     uses: actions/upload-artifact@v3
+            #     with:
+            #         name: everything
+            #         path: |
+            #             **/*
+            #             !node_modules
