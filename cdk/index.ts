@@ -32,13 +32,24 @@ class SocketStack extends cdk.Stack {
       architecture: lambda.Architecture.ARM_64
     });
 
+    const defaultLambda = new lambda.Function(this, 'DefaultLambda', {
+      description: "SocketService Default Lambda",
+      code: lambda.AssetCode.fromAsset("./../target/lambda/default/bootstrap.zip", { deployTime: true }),
+      handler: "does_not_matter_for_rust_lambdas",
+      runtime: lambda.Runtime.PROVIDED_AL2,
+      architecture: lambda.Architecture.ARM_64
+    });
+
     const apiGateway = new cdkApiGateway.WebSocketApi(this, `${props.environment}-WebSocketGateway`, {
       description: "Websocket Gateway that proxies requests to the Rust Lambda functions",
       connectRouteOptions: {
           integration: new WebSocketLambdaIntegration('connect-integration', connectLambda)
       },
-      disconnectRouteOptions:{
+      disconnectRouteOptions: {
           integration: new WebSocketLambdaIntegration('disconnect-integration', disconnectLambda)
+      },
+      defaultRouteOptions: {
+          integration: new WebSocketLambdaIntegration('default-integration', defaultLambda)
       }
     });
 

@@ -119,6 +119,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "default"
+version = "0.1.0"
+dependencies = [
+ "lambda_http",
+ "lambda_runtime",
+ "serde_json",
+ "tokio",
+ "tracing",
+ "tracing-subscriber",
+]
+
+[[package]]
 name = "disconnect"
 version = "0.1.0"
 dependencies = [
