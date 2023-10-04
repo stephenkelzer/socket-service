@@ -63,11 +63,11 @@ class SocketStack extends cdk.Stack {
       stageName: "abc",
       webSocketApi: apiGateway,
       autoDeploy: true
-    })
+    });
 
-    // apiGateway.grantManageConnections(connectLambda);
-    // apiGateway.grantManageConnections(disconnectLambda);
-    // apiGateway.grantManageConnections(defaultLambda);
+    apiGateway.grantManageConnections(connectLambda);
+    apiGateway.grantManageConnections(disconnectLambda);
+    apiGateway.grantManageConnections(defaultLambda);
 
     apiGateway.addRoute('test', {
       integration: new WebSocketLambdaIntegration('default-integration', defaultLambda),
