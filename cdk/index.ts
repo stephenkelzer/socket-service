@@ -6,6 +6,7 @@ import * as cdkApiGateway from '@aws-cdk/aws-apigatewayv2-alpha';
 import { WebSocketLambdaIntegration } from '@aws-cdk/aws-apigatewayv2-integrations-alpha';
 import { Construct } from 'constructs';
 import { RetentionDays } from 'aws-cdk-lib/aws-logs';
+import { User } from 'aws-cdk-lib/aws-iam';
 
 type ENVIRONMENT = 'test' | 'staging' | 'prod';
 
@@ -58,16 +59,22 @@ class SocketStack extends cdk.Stack {
       },
     });
 
-    apiGateway.grantManageConnections(connectLambda);
-    apiGateway.grantManageConnections(disconnectLambda);
-    apiGateway.grantManageConnections(defaultLambda);
+    const apiGatewayStage = new cdkApiGateway.WebSocketStage(this, `${props.environment}-WebSocketStage`, {
+      stageName: "abc",
+      webSocketApi: apiGateway,
+      autoDeploy: true
+    })
+
+    // apiGateway.grantManageConnections(connectLambda);
+    // apiGateway.grantManageConnections(disconnectLambda);
+    // apiGateway.grantManageConnections(defaultLambda);
 
     apiGateway.addRoute('test', {
       integration: new WebSocketLambdaIntegration('default-integration', defaultLambda),
       returnResponse: true
     });
 
-    new cdk.CfnOutput(this, 'GatewayUrl', { value: apiGateway.apiEndpoint ?? "unknown" });
+    new cdk.CfnOutput(this, 'GatewayUrl', { value: apiGatewayStage.url ?? "unknown" });
   }
 }
 
