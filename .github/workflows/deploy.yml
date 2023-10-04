@@ -50,7 +50,7 @@ jobs:
                     version: 2
 
             -   name: Install CDK Dependencies
-                run: npm ci --only=prod
+                run: npm ci
                 working-directory: ./cdk
 
             -   name: Run CDK Tests
