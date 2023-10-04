@@ -21,6 +21,7 @@ class SocketStack extends cdk.Stack {
       code: lambda.AssetCode.fromAsset("./../target/lambda/connect", { deployTime: true }),
       handler: "does_not_matter_for_rust_lambdas",
       runtime: lambda.Runtime.PROVIDED_AL2,
+      architecture: lambda.Architecture.ARM_64
     });
 
     const disconnectLambda = new lambda.Function(this, 'DisconnectLambda', {
@@ -28,6 +29,7 @@ class SocketStack extends cdk.Stack {
       code: lambda.AssetCode.fromAsset("./../target/lambda/disconnect", { deployTime: true }),
       handler: "does_not_matter_for_rust_lambdas",
       runtime: lambda.Runtime.PROVIDED_AL2,
+      architecture: lambda.Architecture.ARM_64
     });
 
     const apiGateway = new cdkApiGateway.WebSocketApi(this, `${props.environment}-WebSocketGateway`, {
