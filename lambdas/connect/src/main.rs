@@ -12,7 +12,7 @@ use serde_json::json;
 #[tokio::main]
 async fn main() -> Result<(), LambdaError> {
     tracing_subscriber::fmt()
-        .with_max_level(tracing::Level::INFO)
+        .with_max_level(tracing::Level::TRACE)
         .with_target(false)
         .without_time()
         .init();
