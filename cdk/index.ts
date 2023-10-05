@@ -28,41 +28,36 @@ class SocketStack extends cdk.Stack {
       removalPolicy: cdk.RemovalPolicy.DESTROY,
     });
 
-    const lambdaEnvironmentVariables = {
-      CONNECTED_CLIENTS_TABLE_NAME: db.tableName,
-      CONNECTED_CLIENTS_TABLE_PARTITION_KEY: db.schema().partitionKey.name
-    };
-
-    const connectLambda = new lambda.Function(this, 'ConnectLambda', {
-      description: "SocketService Connect Lambda",
-      code: lambda.AssetCode.fromAsset("./../target/lambda/connect/bootstrap.zip", { deployTime: true }),
+    const baseLambdaProps: cdk.aws_lambda.FunctionProps = {
+      code: null as unknown as lambda.Code,
       handler: "does_not_matter_for_rust_lambdas",
       runtime: lambda.Runtime.PROVIDED_AL2,
       architecture: lambda.Architecture.ARM_64,
       logRetention: RetentionDays.ONE_WEEK,
-      environment: lambdaEnvironmentVariables
+      environment: {
+        CONNECTED_CLIENTS_TABLE_NAME: db.tableName,
+        CONNECTED_CLIENTS_TABLE_PARTITION_KEY: db.schema().partitionKey.name
+      }
+    }
+
+    const connectLambda = new lambda.Function(this, 'ConnectLambda', {
+      ...baseLambdaProps,
+      description: "SocketService Connect Lambda",
+      code: lambda.AssetCode.fromAsset("./../target/lambda/connect/bootstrap.zip", { deployTime: true }),
     });
     db.grantReadWriteData(connectLambda);
 
     const disconnectLambda = new lambda.Function(this, 'DisconnectLambda', {
+      ...baseLambdaProps,
       description: "SocketService Disconnect Lambda",
       code: lambda.AssetCode.fromAsset("./../target/lambda/disconnect/bootstrap.zip", { deployTime: true }),
-      handler: "does_not_matter_for_rust_lambdas",
-      runtime: lambda.Runtime.PROVIDED_AL2,
-      architecture: lambda.Architecture.ARM_64,
-      logRetention: RetentionDays.ONE_WEEK,
-      environment: lambdaEnvironmentVariables
     });
     db.grantReadWriteData(disconnectLambda);
 
     const defaultLambda = new lambda.Function(this, 'DefaultLambda', {
+      ...baseLambdaProps,
       description: "SocketService Default Lambda",
       code: lambda.AssetCode.fromAsset("./../target/lambda/default/bootstrap.zip", { deployTime: true }),
-      handler: "does_not_matter_for_rust_lambdas",
-      runtime: lambda.Runtime.PROVIDED_AL2,
-      architecture: lambda.Architecture.ARM_64,
-      logRetention: RetentionDays.ONE_WEEK,
-      environment: lambdaEnvironmentVariables
     });
     db.grantReadData(defaultLambda);
 

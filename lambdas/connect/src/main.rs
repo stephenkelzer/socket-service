@@ -75,20 +75,20 @@ async fn handler(
 
     put_item_request.send().await?;
 
-    let query_items_request = dynamo_client
-        .query()
+    let scan_items_request = dynamo_client
+        .scan()
         .table_name(environment_variables.connected_clients_table_name.clone())
-        .filter_expression("#connection_id <> :connection_id")
-        .expression_attribute_names(
-            "#connection_id",
-            &environment_variables.connected_clients_table_partition_key,
-        )
-        .expression_attribute_values(":connection_id", AttributeValue::S(connection_id.clone()))
+        // .filter_expression("#connection_id <> :connection_id")
+        // .expression_attribute_names(
+        //     "#connection_id",
+        //     &environment_variables.connected_clients_table_partition_key,
+        // )
+        // .expression_attribute_values(":connection_id", AttributeValue::S(connection_id.clone()))
         .limit(10);
 
-    tracing::debug!("dynamo.query: {:?}", query_items_request);
+    tracing::debug!("dynamo.scan: {:?}", scan_items_request);
 
-    if let Some(items) = query_items_request.send().await?.items {
+    if let Some(items) = scan_items_request.send().await?.items {
         let futures: Vec<_> = items
             .iter()
             .cloned()
