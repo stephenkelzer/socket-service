@@ -73,7 +73,6 @@ jobs:
                 run: |
                     echo ${{ steps.cdk-deploy.outputs.gateway_url }}
                     echo ${{ steps.cdk-deploy.outputs.gateway_management_url }}
-                    echo ${{ steps.cdk-deploy.outputs }}
 
             -   name: Save CDK Outputs to AWS Systems Manager Parameter Store
                 run: |
