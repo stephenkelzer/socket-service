@@ -45,8 +45,8 @@ async fn handler(
 ) -> Result<ApiGatewayProxyResponse, LambdaError> {
     tracing::debug!("connect.handler: {:?}", event);
 
-    let connection_id: &str = match event.payload.request_context.connection_id {
-        Some(connection_id) => connection_id.as_str(),
+    let connection_id = match event.payload.request_context.connection_id {
+        Some(connection_id) => connection_id,
         None => {
             return Ok(ApiGatewayProxyResponse {
                 status_code: 400,
@@ -68,7 +68,7 @@ async fn handler(
         .table_name(environment_variables.connected_clients_table_name.clone())
         .item(
             &environment_variables.connected_clients_table_partition_key,
-            AttributeValue::S(connection_id.clone()),
+            AttributeValue::S(connection_id.to_string()),
         );
 
     tracing::debug!("dynamo.put_item: {:?}", put_item_request);
@@ -83,6 +83,7 @@ async fn handler(
     tracing::debug!("dynamo.scan: {:?}", scan_items_request);
 
     if let Some(items) = scan_items_request.send().await?.items {
+        let connection_id = connection_id.as_str().clone();
         let futures: Vec<_> = items
             .iter()
             .cloned()
