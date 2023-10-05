@@ -83,7 +83,7 @@ async fn handler(
             "#connection_id",
             &environment_variables.connected_clients_table_partition_key,
         )
-        .expression_attribute_values(":connection_id", AttributeValue::N(connection_id.clone()))
+        .expression_attribute_values(":connection_id", AttributeValue::S(connection_id.clone()))
         .limit(10);
 
     tracing::debug!("dynamo.query: {:?}", query_items_request);
@@ -93,7 +93,13 @@ async fn handler(
             .iter()
             .cloned()
             .map(|x| async move {
-                let conn_id = x.get("connection_id").unwrap().as_s().unwrap();
+                let conn_id = x
+                    .get(&environment_variables.connected_clients_table_partition_key)
+                    .unwrap()
+                    .as_s()
+                    .unwrap();
+
+                tracing::debug!("sending message to conn_id: {:?}", conn_id);
 
                 apigateway_client
                     .post_to_connection()
