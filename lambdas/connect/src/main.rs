@@ -45,8 +45,8 @@ async fn handler(
 ) -> Result<ApiGatewayProxyResponse, LambdaError> {
     tracing::debug!("connect.handler: {:?}", event);
 
-    let connection_id = match event.payload.request_context.connection_id {
-        Some(connection_id) => connection_id,
+    let connection_id: &str = match event.payload.request_context.connection_id {
+        Some(connection_id) => connection_id.as_str(),
         None => {
             return Ok(ApiGatewayProxyResponse {
                 status_code: 400,
@@ -99,7 +99,7 @@ async fn handler(
                     .post_to_connection()
                     .connection_id(conn_id)
                     .data(Blob::new(
-                        json!({ "message": format!("User {} has joined the chat.", conn_id) })
+                        json!({ "message": format!("User {} has entered the chat.", connection_id) })
                             .to_string(),
                     ))
                     .send()
