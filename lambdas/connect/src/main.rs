@@ -12,7 +12,7 @@ use serde_json::json;
 #[tokio::main]
 async fn main() -> Result<(), LambdaError> {
     tracing_subscriber::fmt()
-        .with_max_level(tracing::Level::TRACE)
+        .with_max_level(tracing::Level::DEBUG)
         .with_target(false)
         .without_time()
         .init();
@@ -43,7 +43,7 @@ async fn handler(
     dynamo_client: &aws_sdk_dynamodb::Client,
     apigateway_client: &aws_sdk_apigatewaymanagement::Client,
 ) -> Result<ApiGatewayProxyResponse, LambdaError> {
-    tracing::trace!("connect.handler: {:?}", event);
+    tracing::debug!("connect.handler: {:?}", event);
 
     let connection_id = match event.payload.request_context.connection_id {
         Some(connection_id) => connection_id,
@@ -78,35 +78,38 @@ async fn handler(
     let query_items_request = dynamo_client
         .query()
         .table_name(environment_variables.connected_clients_table_name.clone())
-        // comment out if we ever want to exclude the current connection_id
-        // .filter_expression("#connection_id != :connection_id")
-        // .expression_attribute_names(
-        //     "#connection_id",
-        //     &environment_variables.connected_clients_table_partition_key,
-        // )
-        // .expression_attribute_values(":connection_id", AttributeValue::N(connection_id))
+        .filter_expression("#connection_id != :connection_id")
+        .expression_attribute_names(
+            "#connection_id",
+            &environment_variables.connected_clients_table_partition_key,
+        )
+        .expression_attribute_values(":connection_id", AttributeValue::N(connection_id.clone()))
         .limit(10);
 
     tracing::debug!("dynamo.query: {:?}", query_items_request);
 
-    query_items_request
-        .send()
-        .await?
-        .items
-        .iter()
-        .for_each(|item| {
-            tracing::debug!("item: {:?}", item);
-        });
+    if let Some(items) = query_items_request.send().await?.items {
+        let futures: Vec<_> = items
+            .iter()
+            .cloned()
+            .map(|x| async move {
+                let conn_id = x.get("connection_id").unwrap().as_s().unwrap();
 
-    // Send a "new user connected" message to all connected clients
-    apigateway_client
-        .post_to_connection()
-        .connection_id(connection_id)
-        .data(Blob::new(
-            json!({ "message": "New user connected" }).to_string(),
-        ))
-        .send()
-        .await?;
+                apigateway_client
+                    .post_to_connection()
+                    .connection_id(conn_id)
+                    .data(Blob::new(
+                        json!({ "message": format!("User {} has joined the chat.", conn_id) })
+                            .to_string(),
+                    ))
+                    .send()
+                    .await
+            })
+            .collect();
+
+        let send_results = futures::future::try_join_all(futures).await;
+        tracing::debug!("send_results: {:?}", send_results);
+    }
 
     let mut headers = lambda_http::http::HeaderMap::new();
     headers.insert("Content-Type", "application/json".parse().unwrap());

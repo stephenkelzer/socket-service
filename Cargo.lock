@@ -532,6 +532,7 @@ dependencies = [
  "aws-sdk-apigatewaymanagement",
  "aws-sdk-dynamodb",
  "core",
+ "futures",
  "lambda_http",
  "lambda_runtime",
  "serde_json",
