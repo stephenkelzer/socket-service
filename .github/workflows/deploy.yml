@@ -67,13 +67,16 @@ jobs:
                 run: |
                     ENVIRONMENT=staging npx cdk deploy --require-approval never --outputs-file cdk.out.json
                     node --eval "console.log('gateway_url=' + require('./cdk.out.json')['staging-SocketStack'].GatewayUrl)" >> $GITHUB_OUTPUT
+                    node --eval "console.log('gateway_management_url=' + require('./cdk.out.json')['staging-SocketStack'].GatewayManagementUrl)" >> $GITHUB_OUTPUT
 
             -   name: Print CDK Outputs
                 run: |
                     echo ${{ steps.cdk-deploy.outputs.gateway_url }}
 
             -   name: Save CDK Outputs to AWS Systems Manager Parameter Store
-                run: aws ssm put-parameter --name /socket_service/gateway_url --value ${{ steps.cdk-deploy.outputs.gateway_url }} --type String --overwrite
+                run: |
+                    aws ssm put-parameter --name /socket_service/gateway_url --value ${{ steps.cdk-deploy.outputs.gateway_url }} --type String --overwrite
+                    aws ssm put-parameter --name /socket_service/gateway_management_url --value ${{ steps.cdk-deploy.outputs.gateway_management_url }} --type String --overwrite
 
             # -   name: Save Artifact
             #     if: always()

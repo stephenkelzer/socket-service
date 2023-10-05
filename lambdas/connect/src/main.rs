@@ -19,11 +19,11 @@ async fn main() -> Result<(), LambdaError> {
 
     let environment_variables = get_environment().await;
     let dynamo_client = aws_sdk_dynamodb::Client::new(&environment_variables.aws_config);
-    let apigateway_client = apigatewaymanagement::Client::new(&environment_variables.aws_config);
-    // let client = ApiGatewayManagementApiClient::new(Region::Custom {
-    //     name: Region::UsEast1.name().into(),
-    //     endpoint: endpoint(&event.request_context),
-    // });
+    let apigateway_client = apigatewaymanagement::Client::from_conf(
+        apigatewaymanagement::config::Builder::from(&environment_variables.aws_config)
+            .endpoint_url(&environment_variables.gateway_management_url)
+            .build(),
+    );
 
     let environment_variables = &environment_variables;
     let dynamo_client = &dynamo_client;
@@ -78,12 +78,6 @@ async fn handler(
     let scan_items_request = dynamo_client
         .scan()
         .table_name(environment_variables.connected_clients_table_name.clone())
-        // .filter_expression("#connection_id <> :connection_id")
-        // .expression_attribute_names(
-        //     "#connection_id",
-        //     &environment_variables.connected_clients_table_partition_key,
-        // )
-        // .expression_attribute_values(":connection_id", AttributeValue::S(connection_id.clone()))
         .limit(10);
 
     tracing::debug!("dynamo.scan: {:?}", scan_items_request);

@@ -37,6 +37,7 @@ class SocketStack extends cdk.Stack {
       environment: {
         CONNECTED_CLIENTS_TABLE_NAME: db.tableName,
         CONNECTED_CLIENTS_TABLE_PARTITION_KEY: db.schema().partitionKey.name
+        // GATEWAY_MANAGEMENT_URL set below
       }
     }
 
@@ -88,6 +89,12 @@ class SocketStack extends cdk.Stack {
     apiGateway.grantManageConnections(defaultLambda);
 
     new cdk.CfnOutput(this, 'GatewayUrl', { value: apiGatewayStage.url ?? "unknown" });
+    const gatewayManagementUrl = apiGatewayStage.url.replace("wss://", "https://") ?? "unknown";
+    new cdk.CfnOutput(this, 'GatewayManagementUrl', { value: gatewayManagementUrl });
+
+    connectLambda.addEnvironment('GATEWAY_MANAGEMENT_URL', gatewayManagementUrl);
+    disconnectLambda.addEnvironment('GATEWAY_MANAGEMENT_URL', gatewayManagementUrl);
+    defaultLambda.addEnvironment('GATEWAY_MANAGEMENT_URL', gatewayManagementUrl);
   }
 }
 
