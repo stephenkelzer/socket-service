@@ -23,6 +23,8 @@ async fn handler(
     tracing::debug!("disconnected.d: {:?}", event);
     tracing::info!("disconnected.i: {:?}", event);
 
+    // Send a "user disconnected" message to all connected clients
+
     let mut headers = lambda_http::http::HeaderMap::new();
     headers.insert("Content-Type", "application/json".parse().unwrap());
 

@@ -1,12 +1,12 @@
 #!/usr/bin/env node
 import 'source-map-support/register';
 import * as cdk from 'aws-cdk-lib';
+import * as cdkDynamoDB from 'aws-cdk-lib/aws-dynamodb';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
 import * as cdkApiGateway from '@aws-cdk/aws-apigatewayv2-alpha';
 import { WebSocketLambdaIntegration } from '@aws-cdk/aws-apigatewayv2-integrations-alpha';
 import { Construct } from 'constructs';
 import { RetentionDays } from 'aws-cdk-lib/aws-logs';
-import { User } from 'aws-cdk-lib/aws-iam';
 
 type ENVIRONMENT = 'test' | 'staging' | 'prod';
 
@@ -18,14 +18,31 @@ class SocketStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props: SocketStackProps) {
     super(scope, id, props);
 
+    const db = new cdkDynamoDB.Table(this, 'SocketTable', {
+      tableName: 'connected_clients',
+      partitionKey: {
+        name: 'connection_id',
+        type: cdkDynamoDB.AttributeType.STRING
+      },
+      billingMode: cdkDynamoDB.BillingMode.PAY_PER_REQUEST,
+      removalPolicy: cdk.RemovalPolicy.DESTROY,
+    });
+
+    const lambdaEnvironmentVariables = {
+      CONNECTED_CLIENTS_TABLE_NAME: db.tableName,
+      CONNECTED_CLIENTS_TABLE_PARTITION_KEY: db.schema().partitionKey.name
+    };
+
     const connectLambda = new lambda.Function(this, 'ConnectLambda', {
       description: "SocketService Connect Lambda",
       code: lambda.AssetCode.fromAsset("./../target/lambda/connect/bootstrap.zip", { deployTime: true }),
       handler: "does_not_matter_for_rust_lambdas",
       runtime: lambda.Runtime.PROVIDED_AL2,
       architecture: lambda.Architecture.ARM_64,
-      logRetention: RetentionDays.ONE_WEEK
+      logRetention: RetentionDays.ONE_WEEK,
+      environment: lambdaEnvironmentVariables
     });
+    db.grantReadWriteData(connectLambda);
 
     const disconnectLambda = new lambda.Function(this, 'DisconnectLambda', {
       description: "SocketService Disconnect Lambda",
@@ -33,8 +50,10 @@ class SocketStack extends cdk.Stack {
       handler: "does_not_matter_for_rust_lambdas",
       runtime: lambda.Runtime.PROVIDED_AL2,
       architecture: lambda.Architecture.ARM_64,
-      logRetention: RetentionDays.ONE_WEEK
+      logRetention: RetentionDays.ONE_WEEK,
+      environment: lambdaEnvironmentVariables
     });
+    db.grantReadWriteData(disconnectLambda);
 
     const defaultLambda = new lambda.Function(this, 'DefaultLambda', {
       description: "SocketService Default Lambda",
@@ -42,21 +61,23 @@ class SocketStack extends cdk.Stack {
       handler: "does_not_matter_for_rust_lambdas",
       runtime: lambda.Runtime.PROVIDED_AL2,
       architecture: lambda.Architecture.ARM_64,
-      logRetention: RetentionDays.ONE_WEEK
+      logRetention: RetentionDays.ONE_WEEK,
+      environment: lambdaEnvironmentVariables
     });
+    db.grantReadData(defaultLambda);
 
     const apiGateway = new cdkApiGateway.WebSocketApi(this, `${props.environment}-WebSocketGateway`, {
       description: "Websocket Gateway that proxies requests to the Rust Lambda functions",
       connectRouteOptions: {
-          integration: new WebSocketLambdaIntegration('connect-integration', connectLambda),
+          integration: new WebSocketLambdaIntegration('$connect', connectLambda),
           returnResponse: true
       },
       disconnectRouteOptions: {
-          integration: new WebSocketLambdaIntegration('disconnect-integration', disconnectLambda),
+          integration: new WebSocketLambdaIntegration('$disconnect', disconnectLambda),
           returnResponse: true
       },
       defaultRouteOptions: {
-          integration: new WebSocketLambdaIntegration('default-integration', defaultLambda),
+          integration: new WebSocketLambdaIntegration('$default', defaultLambda),
           returnResponse: true
       },
     });
@@ -70,11 +91,6 @@ class SocketStack extends cdk.Stack {
     apiGateway.grantManageConnections(connectLambda);
     apiGateway.grantManageConnections(disconnectLambda);
     apiGateway.grantManageConnections(defaultLambda);
-
-    apiGateway.addRoute('test', {
-      integration: new WebSocketLambdaIntegration('default-integration', defaultLambda),
-      returnResponse: true
-    });
 
     new cdk.CfnOutput(this, 'GatewayUrl', { value: apiGatewayStage.url ?? "unknown" });
   }

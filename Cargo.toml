@@ -1,5 +1,5 @@
 [workspace]
-members = ["lambdas/*"]
+members = ["lambdas/*", "core"]
 
 [workspace.package]
 version = "0.1.0"
@@ -7,11 +7,14 @@ edition = "2021"
 authors = ["Stephen Kelzer <stephen@stephenkelzer.com>"]
 
 [workspace.dependencies]
+aws-config = "0.56.1"
+aws-sdk-apigatewaymanagement = "0.32.0"
+aws-sdk-dynamodb = "0.32.0"
 lambda_http = "0.8.1"
 lambda_runtime = "0.8.1"
 serde = "1.0.185"
 serde_json = "1.0.99"
-tokio = { version = "1", features = ["macros"] }
+tokio = { version = "1", features = ["full"] }
 tracing = { version = "0.1", features = ["log"] }
 tracing-subscriber = { version = "0.3", default-features = false, features = [
     "fmt",

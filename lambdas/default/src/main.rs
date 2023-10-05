@@ -23,6 +23,9 @@ async fn handler(
     tracing::debug!("default.d: {:?}", event);
     tracing::info!("default.i: {:?}", event);
 
+    // Send the message to all connected clients
+    // remove clients if the send fails?
+
     let mut headers = lambda_http::http::HeaderMap::new();
     headers.insert("Content-Type", "application/json".parse().unwrap());
 
