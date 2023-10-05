@@ -78,7 +78,7 @@ async fn handler(
     let query_items_request = dynamo_client
         .query()
         .table_name(environment_variables.connected_clients_table_name.clone())
-        .filter_expression("#connection_id != :connection_id")
+        .filter_expression("#connection_id <> :connection_id")
         .expression_attribute_names(
             "#connection_id",
             &environment_variables.connected_clients_table_partition_key,
