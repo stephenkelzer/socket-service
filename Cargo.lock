@@ -537,8 +537,6 @@ dependencies = [
  "lambda_runtime",
  "serde_json",
  "tokio",
- "tracing",
- "tracing-subscriber",
 ]
 
 [[package]]
@@ -548,6 +546,8 @@ dependencies = [
  "aws-config",
  "aws-sdk-dynamodb",
  "dotenvy",
+ "tracing",
+ "tracing-subscriber",
 ]
 
 [[package]]
@@ -593,8 +593,6 @@ dependencies = [
  "lambda_runtime",
  "serde_json",
  "tokio",
- "tracing",
- "tracing-subscriber",
 ]
 
 [[package]]
@@ -622,8 +620,6 @@ dependencies = [
  "lambda_runtime",
  "serde_json",
  "tokio",
- "tracing",
- "tracing-subscriber",
 ]
 
 [[package]]
