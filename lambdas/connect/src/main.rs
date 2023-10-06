@@ -83,7 +83,7 @@ async fn handler(
     tracing::debug!("dynamo.scan: {:?}", scan_items_request);
 
     if let Some(items) = scan_items_request.send().await?.items {
-        let connection_id = connection_id.as_str().clone();
+        let connection_id = connection_id.as_str();
         let futures: Vec<_> = items
             .iter()
             .cloned()
