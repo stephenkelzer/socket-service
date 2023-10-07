@@ -1,4 +1,4 @@
-use core::{Variables, Logger};
+use core::{Variables, initialize_logger, tracing};
 
 use apigatewaymanagement::primitives::Blob;
 use aws_sdk_apigatewaymanagement as apigatewaymanagement;
@@ -12,7 +12,7 @@ use serde_json::json;
 
 #[tokio::main]
 async fn main() -> Result<(), LambdaError> {
-    Logger::init();
+    initialize_logger();
 
     let env_vars = Variables::init().await;
     let dynamo_client = aws_sdk_dynamodb::Client::new(&env_vars.aws_config);

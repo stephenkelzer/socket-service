@@ -1,3 +1,5 @@
+use core::{initialize_logger, tracing};
+
 use lambda_http::aws_lambda_events::apigw::{
     ApiGatewayProxyResponse, ApiGatewayWebsocketProxyRequest,
 };
@@ -5,7 +7,7 @@ use lambda_runtime::{run, service_fn, Error as LambdaError, LambdaEvent};
 
 #[tokio::main]
 async fn main() -> Result<(), LambdaError> {
-    Logger::init();
+    initialize_logger();
 
     run(service_fn(handler)).await?;
     Ok(())

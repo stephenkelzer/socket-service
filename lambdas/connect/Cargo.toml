@@ -5,7 +5,6 @@ edition.workspace = true
 
 [dependencies]
 core = { path = "../../core" }
-aws-config.workspace = true
 aws-sdk-apigatewaymanagement.workspace = true
 aws-sdk-dynamodb.workspace = true
 tokio.workspace = true
