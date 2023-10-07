@@ -21,11 +21,9 @@ jobs:
                     node-version: 18.18.0
             
             -   name: Install Rust
-                uses: actions-rs/toolchain@v1
+                uses: dtolnay/rust-toolchain@stable
                 with:
-                    toolchain: stable
-                    profile: minimal
-                    override: true
+                    targets: aarch64-unknown-linux-gnu
 
             -   name: Install cargo-lambda
                 run: pip3 install cargo-lambda
@@ -79,11 +77,8 @@ jobs:
                     aws ssm put-parameter --name /socket_service/gateway_url --value ${{ steps.cdk-deploy.outputs.gateway_url }} --type String --overwrite
                     aws ssm put-parameter --name /socket_service/gateway_management_url --value ${{ steps.cdk-deploy.outputs.gateway_management_url }} --type String --overwrite
 
-            # -   name: Save Artifact
-            #     if: always()
-            #     uses: actions/upload-artifact@v3
-            #     with:
-            #         name: everything
-            #         path: |
-            #             **/*
-            #             !node_modules
+            -   name: Save Artifact
+                uses: actions/upload-artifact@v3
+                with:
+                    name: lambdas
+                    path: target/lambda/**/*
