@@ -1,7 +1,8 @@
+use core::{Variables, initialize_logger, tracing};
+
 use apigatewaymanagement::primitives::Blob;
 use aws_sdk_apigatewaymanagement as apigatewaymanagement;
 use aws_sdk_dynamodb::types::AttributeValue;
-use core::{get_environment, EnvironmentVariables};
 use lambda_http::{
     aws_lambda_events::apigw::{ApiGatewayProxyResponse, ApiGatewayWebsocketProxyRequest},
     Body,
@@ -11,26 +12,22 @@ use serde_json::json;
 
 #[tokio::main]
 async fn main() -> Result<(), LambdaError> {
-    tracing_subscriber::fmt()
-        .with_max_level(tracing::Level::DEBUG)
-        .with_target(false)
-        .without_time()
-        .init();
+    initialize_logger();
 
-    let environment_variables = get_environment().await;
-    let dynamo_client = aws_sdk_dynamodb::Client::new(&environment_variables.aws_config);
+    let env_vars = Variables::init().await;
+    let dynamo_client = aws_sdk_dynamodb::Client::new(&env_vars.aws_config);
     let apigateway_client = apigatewaymanagement::Client::from_conf(
-        apigatewaymanagement::config::Builder::from(&environment_variables.aws_config)
-            .endpoint_url(&environment_variables.gateway_management_url)
+        apigatewaymanagement::config::Builder::from(&env_vars.aws_config)
+            .endpoint_url(&env_vars.gateway_management_url)
             .build(),
     );
 
-    let environment_variables = &environment_variables;
+    let env_vars = &env_vars;
     let dynamo_client = &dynamo_client;
     let apigateway_client = &apigateway_client;
 
     run(service_fn(move |e| async move {
-        handler(e, environment_variables, dynamo_client, apigateway_client).await
+        handler(e, env_vars, dynamo_client, apigateway_client).await
     }))
     .await?;
 
@@ -39,11 +36,11 @@ async fn main() -> Result<(), LambdaError> {
 
 async fn handler(
     event: LambdaEvent<ApiGatewayWebsocketProxyRequest>,
-    environment_variables: &EnvironmentVariables,
+    env_vars: &Variables,
     dynamo_client: &aws_sdk_dynamodb::Client,
     apigateway_client: &aws_sdk_apigatewaymanagement::Client,
 ) -> Result<ApiGatewayProxyResponse, LambdaError> {
-    tracing::debug!("connect.handler: {:?}", event);
+    tracing::trace!("connect.handler: {:?}", event);
 
     let connection_id = match event.payload.request_context.connection_id {
         Some(connection_id) => connection_id,
@@ -65,9 +62,9 @@ async fn handler(
 
     let put_item_request = dynamo_client
         .put_item()
-        .table_name(environment_variables.connected_clients_table_name.clone())
+        .table_name(env_vars.connected_clients_table_name.clone())
         .item(
-            &environment_variables.connected_clients_table_partition_key,
+            &env_vars.connected_clients_table_partition_key,
             AttributeValue::S(connection_id.to_string()),
         );
 
@@ -77,7 +74,7 @@ async fn handler(
 
     let scan_items_request = dynamo_client
         .scan()
-        .table_name(environment_variables.connected_clients_table_name.clone())
+        .table_name(env_vars.connected_clients_table_name.clone())
         .limit(10);
 
     tracing::debug!("dynamo.scan: {:?}", scan_items_request);
@@ -89,7 +86,7 @@ async fn handler(
             .cloned()
             .map(|x| async move {
                 let conn_id = x
-                    .get(&environment_variables.connected_clients_table_partition_key)
+                    .get(&env_vars.connected_clients_table_partition_key)
                     .unwrap()
                     .as_s()
                     .unwrap();

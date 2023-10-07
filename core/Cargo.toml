@@ -7,6 +7,10 @@ authors.workspace = true
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-aws-config.workspace = true
 aws-sdk-dynamodb.workspace = true
+aws-config = "0.56.1"
 dotenvy = "0.15.7"
+tracing = { version = "0.1", features = ["log"] }
+tracing-subscriber = { version = "0.3", default-features = false, features = [
+    "fmt",
+] }

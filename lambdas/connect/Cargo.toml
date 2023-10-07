@@ -5,13 +5,10 @@ edition.workspace = true
 
 [dependencies]
 core = { path = "../../core" }
-aws-config.workspace = true
 aws-sdk-apigatewaymanagement.workspace = true
 aws-sdk-dynamodb.workspace = true
 tokio.workspace = true
 lambda_runtime.workspace = true
 lambda_http.workspace = true
 serde_json.workspace = true
-tracing.workspace = true
-tracing-subscriber.workspace = true
 futures = "0.3"

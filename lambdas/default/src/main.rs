@@ -1,3 +1,5 @@
+use core::{initialize_logger, tracing};
+
 use lambda_http::aws_lambda_events::apigw::{
     ApiGatewayProxyResponse, ApiGatewayWebsocketProxyRequest,
 };
@@ -5,11 +7,7 @@ use lambda_runtime::{run, service_fn, Error as LambdaError, LambdaEvent};
 
 #[tokio::main]
 async fn main() -> Result<(), LambdaError> {
-    tracing_subscriber::fmt()
-        .with_max_level(tracing::Level::TRACE)
-        .with_target(false)
-        .without_time()
-        .init();
+    initialize_logger();
 
     run(service_fn(handler)).await?;
     Ok(())
@@ -18,10 +16,7 @@ async fn main() -> Result<(), LambdaError> {
 async fn handler(
     event: LambdaEvent<ApiGatewayWebsocketProxyRequest>,
 ) -> Result<ApiGatewayProxyResponse, LambdaError> {
-    println!("default.p: {:?}", event);
-    tracing::trace!("default.t: {:?}", event);
-    tracing::debug!("default.d: {:?}", event);
-    tracing::info!("default.i: {:?}", event);
+    tracing::trace!("default.handler: {:?}", event);
 
     // Send the message to all connected clients
     // remove clients if the send fails?
